@@ -14,6 +14,7 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -35,16 +36,22 @@ import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
+
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class RegisteringDataParticipation extends AppCompatActivity implements LocationListener{
 
@@ -57,7 +64,19 @@ public class RegisteringDataParticipation extends AppCompatActivity implements L
     private static  boolean isQuiz;
     private ListView listView1;
 
+
+
+
     static int isUpLoadQuestion;
+
+
+    private static String imei;
+    private static String codPalestra;
+    private static String periodoPalestra;
+    private static String diaPalestra;
+    private static String tipoEvento;
+    private static String dataEnvio;
+    private static String horaEnvio;
 
     static  int idQuestionFirst;
     static  int idQuestionSecond;
@@ -90,7 +109,7 @@ public class RegisteringDataParticipation extends AppCompatActivity implements L
                 if(isUpLoadQuestion > 3){
                     isQuiz = true;
                 }
-                Log.e("============================ VALOR ",String.valueOf(isUpLoadQuestion));
+               // Log.e("============================ VALOR ",String.valueOf(isUpLoadQuestion));
                 SpannableStringBuilder builder = new SpannableStringBuilder();
                 if(!isQuiz) {
                     builder.append(" Responda a pesquisa  depois click para ler o \n QR CODE para marcar a presença.");
@@ -122,6 +141,8 @@ public class RegisteringDataParticipation extends AppCompatActivity implements L
         RadioGroupAdapter adapter = new RadioGroupAdapter(this,R.layout.list_item, questions);
         listView1 = (ListView)findViewById(R.id.listView1);
         listView1.setAdapter(adapter);
+
+        imei = Settings.System.getString(this.getContentResolver(), Settings.Secure.ANDROID_ID);
 
     }
 
@@ -196,6 +217,17 @@ public class RegisteringDataParticipation extends AppCompatActivity implements L
         }
 
         new AsyncTaskGravaDados().execute("http://ws-fmu.sa-east-1.elasticbeanstalk.com/v1/avaliacao");
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(
+                RegisteringDataParticipation.this).setTitle("Atenção")
+                .setMessage("Cadastro realizado com sucesso ...")
+                .setPositiveButton("OK",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                               finish();
+                            }
+                        });
+        builder.create().show();
 
     }
 
@@ -286,23 +318,51 @@ public class RegisteringDataParticipation extends AppCompatActivity implements L
         @Override
         protected JSONObject doInBackground(String... arg0) {
             String urlString = arg0[0];
-            URL url = null;
-
+            HttpResponse response = null;
 
 
             try {
-                url = new URL(urlString);
+                HttpClient client = new DefaultHttpClient();
+                URL url = new URL(urlString);
+                HttpPost httpPost = new HttpPost(url.toURI());
 
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
 
-            try {
-                urlConnection = (HttpURLConnection) url.openConnection();
-                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                JSONObject jsonParam = new JSONObject();
+                jsonParam.put("imei",imei);
+                //jsonParam.put("ra",ra);
+                jsonParam.put("longitude",longitude);
+                jsonParam.put("latitude",latitude);
+                jsonParam.put("codPalestra","1");
+                jsonParam.put("periodoPalestra","N");
+                jsonParam.put("diaPalestra",diaPalestra);
+                jsonParam.put("tipoEvento","3");
+                jsonParam.put("dateEnvio","29/05/16");
+                jsonParam.put("horaEnvio","00:00");
+                jsonParam.put("idPergunta1",idQuestionFirst);
+                jsonParam.put("idPergunta2",idQuestionSecond);
+                jsonParam.put("idPergunta3",idQuestionThird);
+                jsonParam.put("idPergunta4",idQuestionFourth);
+                jsonParam.put("notaPergunta1",notaQuestionFirst);
+                jsonParam.put("notaPergunta2",notaQuestionSecond);
+                jsonParam.put("notaPergunta3",notaQuestionThird);
+                jsonParam.put("notaPergunta4",notaQuestionFourth);
+
+                httpPost.setEntity(new StringEntity(jsonParam.toString(), "UTF-8"));
+
+                httpPost.setHeader("Content-Type", "application/json");
+                httpPost.setHeader("Accept-Encoding", "application/json");
+                httpPost.setHeader("Accept-Language", "en-US");
+                response =client.execute(httpPost);
+
+              //  Log.e("===========================",jsonParam.toString());
+
 
             } catch (IOException e) {
+                e.printStackTrace();
+
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
                 e.printStackTrace();
             }
 
@@ -318,6 +378,13 @@ public class RegisteringDataParticipation extends AppCompatActivity implements L
 
         }
 
+    }
+
+
+    private String getDateTime() {
+        DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        Date date = new Date();
+        return dateFormat.format(date);
     }
 
 

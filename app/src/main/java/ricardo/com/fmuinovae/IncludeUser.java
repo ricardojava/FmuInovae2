@@ -117,9 +117,6 @@ public class IncludeUser extends AppCompatActivity {
             }
         });
 
-
-
-
     }
 
 

@@ -42,7 +42,7 @@ public class SplashMedia extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
         new AsyncTaskParseJson().execute("http://ws-fmu.sa-east-1.elasticbeanstalk.com/v1/usuarios/imei/"+System.getString(this.getContentResolver(), Settings.Secure.ANDROID_ID));
-        //new AsyncTaskParseJson().execute("http://ws-fmu.sa-east-1.elasticbeanstalk.com/v1/usuarios/imei/29");
+        //new AsyncTaskParseJson().execute("http://ws-fmu.sa-east-1.elasticbeanstalk.com/v1/usuarios/imei/299999999");
 
         new Handler().postDelayed(new Runnable() {
             /*
@@ -50,16 +50,16 @@ public class SplashMedia extends Activity {
              */
             @Override
             public void run() {
-               /* if(isIncludeUser) {
+                if(isIncludeUser) {
                     Intent i = new Intent(SplashMedia.this, RegisteringDataParticipation.class);
                    // Intent i = new Intent(SplashMedia.this, OpenReadQrCode.class);
                     startActivity(i);
 
 
-                }else{*/
+                }else{
                     Intent i = new Intent(SplashMedia.this, IncludeUser.class);
                     startActivity(i);
-               // }
+                }
 
                // finish();
             }
