@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">FmuInovae</string>
+    <string name="action_settings">Settings</string>
+
+
+    <string name="prompt_name">Nome:</string>
+    <string name="prompt_ra">RA:</string>
+    <string name="prompt_curso">Curso:</string>
+    <string name="prompt_semestre">Semestre:</string>
+
+
+    <string name="action_sign_in">Sign in or register</string>
+    <string name="title_activity_capture">CaptureActivity</string>
+    <string name="title_activity_navigation_fmu_inovae">NavigationFmuInovae</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="title_activity_registering_data_participation">FMU INOVAE</string>
+
+    <string name="error_invalid_password">Insira os 7 dígitos do RA</string>
+    <string name="error_incorrect_password">Ra incorreto</string>
+</resources>
