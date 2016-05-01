@@ -36,13 +36,14 @@ public class SplashMedia extends Activity {
     // Timer da splash screen
     private static int SPLASH_TIME_OUT = 4000;
     private boolean isIncludeUser;
+    private static String ra;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
         new AsyncTaskParseJson().execute("http://ws-fmu.sa-east-1.elasticbeanstalk.com/v1/usuarios/imei/"+System.getString(this.getContentResolver(), Settings.Secure.ANDROID_ID));
-        //new AsyncTaskParseJson().execute("http://ws-fmu.sa-east-1.elasticbeanstalk.com/v1/usuarios/imei/299999999");
+        //new AsyncTaskParseJson().execute("http://ws-fmu.sa-east-1.elasticbeanstalk.com/v1/usuarios/ra/299999999");
 
         new Handler().postDelayed(new Runnable() {
             /*
@@ -53,6 +54,9 @@ public class SplashMedia extends Activity {
                 if(isIncludeUser) {
                     Intent i = new Intent(SplashMedia.this, RegisteringDataParticipation.class);
                    // Intent i = new Intent(SplashMedia.this, OpenReadQrCode.class);
+                    Bundle params = new Bundle();
+                    params.putString("ra", ra);
+                    i.putExtras(params);
                     startActivity(i);
 
 
@@ -102,24 +106,36 @@ public class SplashMedia extends Activity {
             try {
                 URL url = new URL(urlString);
                 urlConnection = (HttpURLConnection) url.openConnection();
-                InputStream is = new BufferedInputStream(urlConnection.getInputStream());
+                //Log.e(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   ",String.valueOf(urlConnection.getResponseCode()));
+                if(urlConnection.getResponseCode() == 200) {
+                    InputStream is = new BufferedInputStream(urlConnection.getInputStream());
 
-                BufferedReader in = new BufferedReader(new InputStreamReader(is));
+                    BufferedReader in = new BufferedReader(new InputStreamReader(is));
 
-                String line;
-                while ((line = in.readLine()) != null) {
-                    sb.append(line);
-                   // Log.d(TAG, (String) sb.toString());
+                    String line;
+                    while ((line = in.readLine()) != null) {
+                        sb.append(line);
+                        // Log.d(TAG, (String) sb.toString());
+                    }
+
+                    jsonRootObject = new JSONObject(sb.toString());
+                }else{
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(
+                            SplashMedia.this).setTitle("Atenção")
+                            .setMessage("Falha com a internet ...")
+                            .setPositiveButton("OK", null);
+                    builder.create().show();
+
                 }
-
-                jsonRootObject = new JSONObject(sb.toString());
-
             }catch( Exception e) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(
+               /* AlertDialog.Builder builder = new AlertDialog.Builder(
                         SplashMedia.this).setTitle("Atenção")
-                        .setMessage("Falha na consulta na conexão ...")
+                        .setMessage("Falha na consulta da conexão ...")
                         .setPositiveButton("OK", null);
-                builder.create().show();
+                builder.create().show();*/
+
+                java.lang.System.out.println(e.getMessage());
             }
             finally {
                 urlConnection.disconnect();
@@ -138,8 +154,9 @@ public class SplashMedia extends Activity {
                     JSONArray jsonArray = jsonRootObject.optJSONArray("request");
                     for(int i=0; i < jsonArray.length(); i++) {
                         JSONObject jsonObject = jsonArray.getJSONObject(i);
-                        //Log.i("============================================== ",jsonObject.optString("imei").toString());
-                    if(Integer.parseInt(jsonObject.optString("imei").toString())==1 ){
+                        Log.i("============================================== ",jsonObject.optString("ra").toString());
+                    if(Integer.parseInt(jsonObject.optString("ra").toString())!=0 ){
+                        ra = jsonObject.optString("ra").toString();
                         isIncludeUser = true;
                          }
                     }

@@ -14,7 +14,7 @@
         android:textColor="#454545"
         android:gravity="center_horizontal"
         android:layout_alignParentBottom="true"
-        android:text="by Ricardo Almeida ADS turma 2015"
+        android:text="by Ricardo Almeida ADS turma 2015 contato (11)960715684"
         android:id="@+id/textView2" />
 
     <ImageView

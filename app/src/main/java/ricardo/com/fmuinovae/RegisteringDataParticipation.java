@@ -57,19 +57,21 @@ public class RegisteringDataParticipation extends AppCompatActivity implements L
 
     //private Button mButton;
     public static final int MY_PERMISSIONS_REQUEST_CAMERA = 42;
-    private static double latitude;
-    private static double longitude;
+    private static String latitude;
+    private static String longitude;
     private static LocationManager lm;
     private GoogleApiClient client;
-    private static  boolean isQuiz;
+    static  boolean isQuiz;
     private ListView listView1;
 
 
 
 
     static int isUpLoadQuestion;
-
-
+    /*static int isUpLoadQuestion2;
+    static boolean isUpLoadQuestion3;
+    static boolean isUpLoadQuestion4;
+*/
     private static String imei;
     private static String codPalestra;
     private static String periodoPalestra;
@@ -88,6 +90,10 @@ public class RegisteringDataParticipation extends AppCompatActivity implements L
     static  int notaQuestionThird;
     static  int notaQuestionFourth;
 
+    private static String ra;
+
+    private  static  GPSTracker gps;
+
 
 
     @Override
@@ -97,7 +103,19 @@ public class RegisteringDataParticipation extends AppCompatActivity implements L
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        Intent intent = getIntent();
+        Bundle params = intent.getExtras();
+
+
+        gps = new GPSTracker(this);
+
+        if(params!=null) {
+            ra = params.getString("ra");
+        }
+
+
+
+            FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setBackgroundColor(Color.BLUE);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -112,7 +130,8 @@ public class RegisteringDataParticipation extends AppCompatActivity implements L
                // Log.e("============================ VALOR ",String.valueOf(isUpLoadQuestion));
                 SpannableStringBuilder builder = new SpannableStringBuilder();
                 if(!isQuiz) {
-                    builder.append(" Responda a pesquisa  depois click para ler o \n QR CODE para marcar a presença.");
+                    builder.append(" Responda a pesquisa  depois click para ler o QR CODE para marcar presença.");
+                    //builder.append(isQuiz);
                     snackBar = Snackbar.make(view, builder, Snackbar.LENGTH_LONG);
                 }else if(isQuiz){
                     snackBar = Snackbar.make(view, builder, Snackbar.LENGTH_LONG);
@@ -169,7 +188,8 @@ public class RegisteringDataParticipation extends AppCompatActivity implements L
         } else {
             // Solicita ao usuário para ligar o GPS
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-            alertDialogBuilder.setMessage("O GPS está desligado, deseja ligar agora?")
+            alertDialogBuilder.setMessage("O GPS está desligado, é preciso a localização para marcar a prese" +
+                    "nça no curso, liqar o GPS?")
                     .setCancelable(false).setPositiveButton(
                     "Sim",
                     new DialogInterface.OnClickListener() {
@@ -212,11 +232,26 @@ public class RegisteringDataParticipation extends AppCompatActivity implements L
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
         if (scanResult != null) {
-            String re = scanResult.getContents();
-            Log.d("code", re);
+            String s = scanResult.getContents();
+//            Log.e(" ================  a=1, b='N',c=3, d='P'   ================================ ", re);
+            //s.concat(s.trim());
+            String notSpace =s.replaceAll(" ","");
+            char[] values = notSpace.toCharArray();
+            //String[] fields = values=s.split(",");
+           /* for (int i =0 ; i < values.length; i ++){
+                Log.i(" ================  a=1, b='N',c=3, d='P'   ================================ " +
+                        "", String.valueOf(String.valueOf(values[i])));
+
+            }*/
+
+            codPalestra=String.valueOf(values[2]);//1
+            periodoPalestra=String.valueOf(values[7]);//n
+            diaPalestra=String.valueOf(values[12]);//3
+            tipoEvento=String.valueOf(values[17]);//p
         }
 
-        new AsyncTaskGravaDados().execute("http://ws-fmu.sa-east-1.elasticbeanstalk.com/v1/avaliacao");
+
+        new AsyncTaskGravaDados().execute("http://ws-fmu.sa-east-1.elasticbeanstalk.com/v1/pesquisa");
 
         AlertDialog.Builder builder = new AlertDialog.Builder(
                 RegisteringDataParticipation.this).setTitle("Atenção")
@@ -274,8 +309,8 @@ public class RegisteringDataParticipation extends AppCompatActivity implements L
     @Override
     public void onLocationChanged(Location location) {
 
-        latitude= location.getLongitude();
-        latitude =  location.getLatitude();
+        latitude= String.valueOf(location.getLongitude());
+        latitude =  String.valueOf(location.getLatitude());
 
 
     }
@@ -319,7 +354,8 @@ public class RegisteringDataParticipation extends AppCompatActivity implements L
         protected JSONObject doInBackground(String... arg0) {
             String urlString = arg0[0];
             HttpResponse response = null;
-
+            //double latitude = gps.getLatitude();
+            //double longitude = gps.getLongitude();
 
             try {
                 HttpClient client = new DefaultHttpClient();
@@ -328,30 +364,44 @@ public class RegisteringDataParticipation extends AppCompatActivity implements L
 
 
                 JSONObject jsonParam = new JSONObject();
+                jsonParam.put("ra",ra);
                 jsonParam.put("imei",imei);
-                //jsonParam.put("ra",ra);
-                jsonParam.put("longitude",longitude);
-                jsonParam.put("latitude",latitude);
-                jsonParam.put("codPalestra","1");
-                jsonParam.put("periodoPalestra","N");
-                jsonParam.put("diaPalestra",diaPalestra);
-                jsonParam.put("tipoEvento","3");
-                jsonParam.put("dateEnvio","29/05/16");
-                jsonParam.put("horaEnvio","00:00");
+
+                jsonParam.put("longitude",String.valueOf(gps.getLongitude()));
+                jsonParam.put("latitude",String.valueOf(gps.getLatitude()));
+
+                /*jsonParam.put("longitude",longitude);
+                jsonParam.put("latitude",latitude);*/
+
+                jsonParam.put("codPalestra",codPalestra); // a
+                jsonParam.put("periodoPalestra",periodoPalestra); //b
+                jsonParam.put("diaPalestra",diaPalestra); //c
+                jsonParam.put("tipoEvento",tipoEvento); //d
+
                 jsonParam.put("idPergunta1",idQuestionFirst);
-                jsonParam.put("idPergunta2",idQuestionSecond);
-                jsonParam.put("idPergunta3",idQuestionThird);
-                jsonParam.put("idPergunta4",idQuestionFourth);
                 jsonParam.put("notaPergunta1",notaQuestionFirst);
+
+                jsonParam.put("idPergunta2",idQuestionSecond);
                 jsonParam.put("notaPergunta2",notaQuestionSecond);
+
+                jsonParam.put("idPergunta3",idQuestionThird);
                 jsonParam.put("notaPergunta3",notaQuestionThird);
+
+                jsonParam.put("idPergunta4",idQuestionFourth);
                 jsonParam.put("notaPergunta4",notaQuestionFourth);
+
+
+
+
+
 
                 httpPost.setEntity(new StringEntity(jsonParam.toString(), "UTF-8"));
 
                 httpPost.setHeader("Content-Type", "application/json");
                 httpPost.setHeader("Accept-Encoding", "application/json");
                 httpPost.setHeader("Accept-Language", "en-US");
+
+
                 response =client.execute(httpPost);
 
               //  Log.e("===========================",jsonParam.toString());
@@ -378,13 +428,6 @@ public class RegisteringDataParticipation extends AppCompatActivity implements L
 
         }
 
-    }
-
-
-    private String getDateTime() {
-        DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-        Date date = new Date();
-        return dateFormat.format(date);
     }
 
 
